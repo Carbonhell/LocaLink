@@ -1,0 +1,2 @@
+Since Azure's availability of the OpenAI Ada embeddings model is still closed to the public, the project currently uses the same model through a direct OpenAI endpoint. Considering the model's the same, you should be easily able to swap the endpoint and the rest from OpenAI to Azure OpenAI.
+https://learn.microsoft.com/it-it/azure/ai-services/openai/overview#how-do-i-get-access-to-azure-openai
