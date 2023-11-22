@@ -1,2 +1,7 @@
 .vscode
 *.code-workspace
+local.settings.json
+.idea
+ngrok.exe
+ngrok.yml
+*.http

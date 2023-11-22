@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.6.20"
+axum = {version="0.6.20", features=["headers"]}
 hyper = { version = "0.14.27", features = ["full"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tower = "0.4.13"
@@ -17,3 +17,4 @@ anyhow = "1.0.75"
 azure_data_cosmos = "0.16.0"
 azure_core = "0.16.0"
 futures = "0.3.28"
+shared = {path = "../shared"}

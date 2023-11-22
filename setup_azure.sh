@@ -1,8 +1,194 @@
 #!/bin/bash
-search_service_name=''
+
+# Variable block
+location="West Europe"
+resourceGroup="localink-rg"
+tag="localink"
+account="localink-account-cosmos" #needs to be lower case
+database="main"
+user_container="users"
+partitionKey="/id"
+
+searchName='localink-search'
+searchDataSourceName='localink-datasource'
+searchIndexName='localink-search-index'
+searchIndexerName='localink-indexer'
+
+
+usage() { echo "Usage: $0 [-u]" 1>&2; exit 1; }
+
+while getopts "u" o; do
+    case "${o}" in
+        u)
+            echo "Deleting resources..."
+            az group delete --name $resourceGroup
+            exit 0
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 echo "Configuring required Azure services..."
 
-echo "Defining the datasource..."
+# Create a resource group
+echo "Creating $resourceGroup in $location..."
+az group create --name $resourceGroup --location "$location" --tags $tag
 
-curl -X POST -H 'Content-Type: application/json' -d '{"message": "hello"}' https://[service name].search.windows.net/datasources?api-version=2020-06-30
+
+# Cosmos DB
+echo "Configuring Cosmos DB resources..."
+
+# Create a Cosmos account for SQL API
+echo "Creating Cosmos DB account"
+az cosmosdb create --name $account --resource-group $resourceGroup --default-consistency-level Eventual --locations regionName="$location" failoverPriority=0 isZoneRedundant=False --capabilities EnableServerless
+
+# Create a SQL API database
+echo "Creating $database database"
+az cosmosdb sql database create --account-name $account --resource-group $resourceGroup --name $database
+
+# Create a SQL API user_container
+echo "Creating $user_container with $partitionKey"
+az cosmosdb sql container create --account-name $account --resource-group $resourceGroup --database-name $database --name $user_container --partition-key-path $partitionKey
+
+# Azure Cognitive Search
+echo "Creating search service"
+az search service create --name $searchName --resource-group $resourceGroup --sku Free
+
+# Fetch generated primary admin key
+echo "Fetching the admin key for subsequent data calls"
+adminKey=$(az search admin-key show --resource-group $resourceGroup --service-name $searchName --query primaryKey --out tsv)
+adminKey="${adminKey%$'\r'}"
+
+echo "Creating search index"
+jsonBody=$(cat <<EOF
+{
+    "name": "$searchIndexName",
+    "fields": [{
+        "name": "id",
+        "type": "Edm.String",
+        "key": true,
+        "searchable": false
+    }, 
+    {
+        "name": "description",
+        "type": "Edm.String",
+        "filterable": false,
+        "searchable": true,
+        "sortable": false,
+        "facetable": false,
+        "retrievable": true
+    },
+    {
+        "name": "name",
+        "type": "Edm.String",
+        "filterable": false,
+        "searchable": true,
+        "sortable": false,
+        "facetable": false,
+        "retrievable": true
+    },
+    {
+      "name": "description_embeddings",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": false,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "indexAnalyzer": null,
+      "searchAnalyzer": null,
+      "analyzer": null,
+      "synonymMaps": [],
+      "dimensions": 1536,
+      "vectorSearchProfile": "default-vector-profile"
+    },
+    {
+      "name": "location",
+      "type": "Edm.GeographyPoint",
+      "searchable": false,
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "retrievable": true
+    }
+  ],
+  "vectorSearch": {
+     "algorithms": [
+         {
+             "name": "hnsw-main",
+             "kind": "hnsw",
+             "hnswParameters": {
+                 "m": 4,
+                 "efConstruction": 400,
+                 "efSearch": 500,
+                 "metric": "cosine"
+             }
+         }
+     ],
+     "profiles": [
+       {
+         "name": "default-vector-profile",
+         "algorithm": "hnsw-main"
+       }
+     ]
+ }
+}
+EOF
+)
+curl -H "Content-Type: application/json" -H "api-key: $adminKey" --request PUT --data "$jsonBody" "https://$searchName.search.windows.net/indexes('$searchIndexName')?allowIndexDowntime=False&api-version=2023-10-01-Preview"
+
+# Currently disabled - a push strategy seems better for our usecase (otherwise the delay would be minimum 3 minutes), but in future batching might be better
+#echo "Creating data source"
+#cosmosKey=$(az cosmosdb keys list --name $account --resource-group $resourceGroup --type keys --query primaryMasterKey --out tsv)
+#cosmosKey="${cosmosKey%$'\r'}"
+# todo filter data
+#jsonBody=$(cat <<EOF
+#{
+#    "name": "$searchDataSourceName",
+#    "type": "cosmosdb",
+#    "credentials": {
+#      "connectionString": "AccountEndpoint=https://$account.documents.azure.com;AccountKey=$cosmosKey;Database=$database"
+#    },
+#    "user_container": {
+#      "name": "$user_container",
+#      "query": null
+#    },
+#    "dataChangeDetectionPolicy": {
+#      "@odata.type": "#Microsoft.Azure.Search.HighWaterMarkChangeDetectionPolicy",
+#      "highWaterMarkColumnName": "_ts"
+#    }
+#}
+#EOF
+#)
+#
+#curl -H "Content-Type: application/json" -H "api-key: $adminKey" --request POST --data "$jsonBody" https://$searchName.search.windows.net/datasources?api-version=2020-06-30
+#
+#
+#echo "Creating indexer"
+#jsonBody=$(cat <<EOF
+#{
+#    "name" : "$searchIndexerName",
+#    "dataSourceName" : "$searchDataSourceName",
+#    "targetIndexName" : "$searchIndexName",
+#    "disabled": null,
+#    "schedule": null,
+#    "parameters": {
+#        "batchSize": null,
+#        "maxFailedItems": 0,
+#        "maxFailedItemsPerBatch": 0,
+#        "base64EncodeKeys": false,
+#        "configuration": {}
+#        },
+#    "fieldMappings": [],
+#    "encryptionKey": null
+#}
+#EOF
+#)
+#
+#curl -H "Content-Type: application/json" -H "api-key: $adminKey" --request POST --data "$jsonBody" https://$searchName.search.windows.net/indexers?api-version=2020-06-30
+#
+# todo check indexer status

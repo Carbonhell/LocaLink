@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "custom",
+    "GOOGLE_CLIENT_ID": "${{GOOGLE_CLIENT_ID}}",
+    "COSMOS_PRIMARY_KEY":"${{COSMOS_PRIMARY_KEY}}",
+    "COSMOS_ACCOUNT": "localink-account-cosmos",
+    "COSMOS_DB": "main",
+    "USERS_TABLE": "users",
+    "SEARCH_ENDPOINT": "https://localink-search.search.windows.net",
+    "SEARCH_INDEX_NAME": "localink-search-index",
+    "SEARCH_ADMIN_KEY": "${{SEARCH_ADMIN_KEY}}",
+    "OPENAI_API_KEY": "${{OPENAI_API_KEY}}",
+    "OPENAI_BASE_URL": "https://api.openai.com/v1/embeddings",
+    "OPENAI_MODEL": "text-embedding-ada-002"
+  }
+}
