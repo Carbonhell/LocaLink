@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:localink_client/src/models/auth.dart';
+import 'package:localink_client/src/widgets/quoted_text.dart';
 import 'package:localink_client/src/widgets/user_card.dart';
 
 import '../helpers/API.dart';
@@ -40,8 +41,13 @@ class QueryPageState extends State<QueryPage> {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: Text('Match with ${item.name}?'),
-        content: const Text(
-            'Do you really want to match with this user? Doing so will share your position with him (if the user accepts) to allow the real life meeting.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Do you really want to match with this user?'),
+            QuotedText(text: item.description,),
+          ],
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),

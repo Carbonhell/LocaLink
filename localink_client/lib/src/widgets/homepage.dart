@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_sign_in/widgets.dart';
 import 'package:localink_client/src/models/auth.dart';
 import 'package:localink_client/src/widgets/query_page.dart';
+import 'package:localink_client/src/widgets/quoted_text.dart';
 import 'package:provider/provider.dart';
 
 import '../helpers/API.dart';
@@ -42,12 +43,36 @@ class HomepageState extends State<Homepage> {
 
   Future<void> _syncPosition(String token) async {
     var currentTime = DateTime.now().millisecondsSinceEpoch;
-    if(currentTime > 10000 + lastTimestamp) {
+    if (currentTime > 10000 + lastTimestamp) {
       lastTimestamp = currentTime;
       var position = await determinePosition();
-      await API().syncPosition(
-          token, LatLng(position.latitude, position.longitude));
+      await API()
+          .syncPosition(token, LatLng(position.latitude, position.longitude));
     }
+  }
+
+  showDescription(Match item) async {
+    return () async {
+      await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text('Match - ${item.userName}?'),
+          content: Column(
+            children: [
+              QuotedText(
+                text: item.userDescription,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Return'),
+            ),
+          ],
+        ),
+      );
+    };
   }
 
   @override
@@ -75,20 +100,22 @@ class HomepageState extends State<Homepage> {
           final item = authResponse.matches[index];
 
           return MatchCard(
-            onTap: item.matchStatus == MatchStatus.Accepted ? () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        MapPage(authResponse: authResponse, match: item)),
-              );
-            } : null,
-            updateItem: (newStatus) {
-              setState(() {
-                item.matchStatus = newStatus;
-              });
-            },
-            token: authResponse.accessToken,
+              onTap: item.matchStatus == MatchStatus.Accepted
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MapPage(
+                                authResponse: authResponse, match: item)),
+                      );
+                    }
+                  : showDescription(item),
+              updateItem: (newStatus) {
+                setState(() {
+                  item.matchStatus = newStatus;
+                });
+              },
+              token: authResponse.accessToken,
               id: item.userID,
               name: item.userName,
               description: item.userDescription,
@@ -195,10 +222,14 @@ class HomepageState extends State<Homepage> {
                   },
                   label: Text("Meet new people"),
                 ),
-                FloatingActionButton(heroTag: "refresh", child: const Icon(Icons.refresh), onPressed: () async {
-                  var newAuthResponse = await API().refreshProfile(authResponse.accessToken);
-                  authResponse.update(newAuthResponse);
-                })
+                FloatingActionButton(
+                    heroTag: "refresh",
+                    child: const Icon(Icons.refresh),
+                    onPressed: () async {
+                      var newAuthResponse =
+                          await API().refreshProfile(authResponse.accessToken);
+                      authResponse.update(newAuthResponse);
+                    })
               ],
             )
           ],

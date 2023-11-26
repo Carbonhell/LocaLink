@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:localink_client/src/models/auth.dart';
+import 'package:localink_client/src/widgets/quoted_text.dart';
 
 import '../helpers/API.dart';
 
@@ -85,64 +86,66 @@ class MapPageState extends State<MapPage> {
       appBar: AppBar(
         title: Text('Meet with ${widget.match.userName}'),
       ),
-      body: FutureBuilder<void>(
-          future: setupMarkers(token),
-          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            print(snapshot);
-            print(_devicePosition);
-            if (snapshot.connectionState == ConnectionState.done &&
-                _devicePosition != null) {
-              var markers = {Marker(
-                markerId: MarkerId("source"),
-                position: _devicePosition!,
-                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-              )};
-              if (_targetPosition != null) {
-                markers.add(Marker(
-                  markerId: MarkerId("target"),
-                  position: _targetPosition!,
-                ));
-              }
-              
-              return GoogleMap(
-                mapType: MapType.normal,
-                initialCameraPosition: CameraPosition(
-                  target: _devicePosition!,
-                  zoom: 15,
-                ),
-                markers: markers,
-                onMapCreated: (GoogleMapController controller) {
-                  _controller.complete(controller);
-                },
-              );
-            } else if (snapshot.hasError) {
-              return AlertDialog(
-                title: const Text('Location problem'),
-                content: const SingleChildScrollView(
-                  child: ListBody(
-                    children: <Widget>[
-                      Text(
-                          'Please ensure the device location sensors are turned on and that the app has been given the required permission to fetch location data.'),
-                    ],
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            }
-            return const Center(child: CircularProgressIndicator());
-          }),
-      floatingActionButton: _devicePosition != null ? FloatingActionButton.extended(
-        onPressed: () {Navigator.of(context).pop();},
-        label: const Text('Found!'),
-        icon: const Icon(Icons.lightbulb),
-      ) : null,
+      body: Column(
+        children: [
+          QuotedText(text: widget.match.userDescription),
+          Expanded(
+            child: FutureBuilder<void>(
+                future: setupMarkers(token),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  print(snapshot);
+                  print(_devicePosition);
+                  if (snapshot.connectionState == ConnectionState.done &&
+                      _devicePosition != null) {
+                    var markers = {Marker(
+                      markerId: MarkerId("source"),
+                      position: _devicePosition!,
+                      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+                    )};
+                    if (_targetPosition != null) {
+                      markers.add(Marker(
+                        markerId: MarkerId("target"),
+                        position: _targetPosition!,
+                      ));
+                    }
+
+                    return GoogleMap(
+                      mapType: MapType.normal,
+                      initialCameraPosition: CameraPosition(
+                        target: _devicePosition!,
+                        zoom: 15,
+                      ),
+                      markers: markers,
+                      onMapCreated: (GoogleMapController controller) {
+                        _controller.complete(controller);
+                      },
+                    );
+                  } else if (snapshot.hasError) {
+                    return AlertDialog(
+                      title: const Text('Location problem'),
+                      content: const SingleChildScrollView(
+                        child: ListBody(
+                          children: <Widget>[
+                            Text(
+                                'Please ensure the device location sensors are turned on and that the app has been given the required permission to fetch location data.'),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  }
+                  return const Center(child: CircularProgressIndicator());
+                }),
+          ),
+        ],
+      ),
     );
   }
 }
