@@ -211,11 +211,13 @@ class UserInfo {
   final String id;
   final String name;
   final String description;
+  final double searchScore;
 
   UserInfo({
     required this.id,
     required this.name,
     required this.description,
+    required this.searchScore
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
@@ -223,6 +225,7 @@ class UserInfo {
       id: json['id'],
       name: utf8.decode(json['name'].codeUnits),
       description: utf8.decode(json['description'].codeUnits),
+      searchScore: json['@search.score']
     );
   }
 }

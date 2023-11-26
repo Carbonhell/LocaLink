@@ -136,10 +136,10 @@ class MapPageState extends State<MapPage> {
                 ],
               );
             }
-            return CircularProgressIndicator();
+            return const Center(child: CircularProgressIndicator());
           }),
       floatingActionButton: _devicePosition != null ? FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {Navigator.of(context).pop();},
         label: const Text('Found!'),
         icon: const Icon(Icons.lightbulb),
       ) : null,

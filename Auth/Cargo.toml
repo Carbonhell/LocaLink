@@ -19,6 +19,9 @@ futures = "0.3.28"
 anyhow = "1.0.75"
 shared = {path = "../shared"}
 
+[target.x86_64-unknown-linux-musl.dependencies]
+openssl-sys = {version = "0.9.93", features = ["vendored"]}
+
 [dependencies.uuid]
 version = "1.5.0"
 features = [

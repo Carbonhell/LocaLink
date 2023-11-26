@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class UserCard extends StatelessWidget {
   final String name;
   final String description;
+  final double score;
   final GestureTapCallback? onTap;
 
   const UserCard(
       {super.key,
       required this.name,
       required this.description,
+      required this.score,
       this.onTap});
 
   @override
@@ -26,6 +28,7 @@ class UserCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+        trailing: Text("${(score * 100).round()}%"),
       )
     );
   }

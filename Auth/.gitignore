@@ -16,3 +16,4 @@ __azurite_db*__.json
 # Added by cargo
 
 /target
+auth_handler

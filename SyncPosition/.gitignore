@@ -13,3 +13,4 @@ __azurite_db*__.json
 # Added by cargo
 
 /target
+sync_position_handler

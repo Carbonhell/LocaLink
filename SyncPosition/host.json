@@ -14,7 +14,7 @@
   },
   "customHandler": {
     "description": {
-      "defaultExecutablePath": "target/release/sync_position.exe",
+      "defaultExecutablePath": "sync_position_handler",
       "workingDirectory": "",
       "arguments": []
     },

@@ -115,7 +115,7 @@ async fn main() {
 
     // build our application with a single route
     let app = Router::new()
-        .route("/api/add_match", post(add_match))
+        .route("/api/match", post(add_match))
         .with_state(shared_state);
 
     let port_key = "FUNCTIONS_CUSTOMHANDLER_PORT";

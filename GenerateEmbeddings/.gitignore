@@ -14,3 +14,4 @@ __azurite_db*__.json
 # Added by cargo
 
 /target
+generate_embeddings_handler

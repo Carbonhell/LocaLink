@@ -84,6 +84,7 @@ class QueryPageState extends State<QueryPage> {
                   return UserCard(
                       name: item!.name,
                       description: item.description,
+                      score: item.searchScore,
                       onTap: () => onCardTap(token, item, context));
                 },
               );
@@ -128,7 +129,7 @@ class QueryPageState extends State<QueryPage> {
                 ],
               );
             } else {
-              return CircularProgressIndicator();
+              return const Center(child: CircularProgressIndicator());
             }
           },
         ));

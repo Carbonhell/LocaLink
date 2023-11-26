@@ -14,7 +14,7 @@
   },
   "customHandler": {
     "description": {
-      "defaultExecutablePath": "target/release/match.exe",
+      "defaultExecutablePath": "match_handler",
       "workingDirectory": "",
       "arguments": []
     },

@@ -2,6 +2,7 @@
 
 # Variable block
 location="West Europe"
+shortLocation="westeurope"
 resourceGroup="localink-rg"
 tag="localink"
 account="localink-account-cosmos" #needs to be lower case
@@ -14,22 +15,47 @@ searchDataSourceName='localink-datasource'
 searchIndexName='localink-search-index'
 searchIndexerName='localink-indexer'
 
+storageAccountName="localinkstorage"
+functionAuthName="localink-auth"
+functionGenerateEmbeddingsName="localink-generate-embeddings"
+functionMatchName="localink-match"
+functionMeetName="localink-meet"
+functionQueryName="localink-query"
+functionSyncPositionName="localink-sync-position"
 
-usage() { echo "Usage: $0 [-u]" 1>&2; exit 1; }
 
-while getopts "u" o; do
+usage() { echo "Usage: $0 [-u] [-f]" 1>&2; exit 1; }
+
+while getopts "uf" o; do
     case "${o}" in
         u)
             echo "Deleting resources..."
             az group delete --name $resourceGroup
             exit 0
             ;;
+        f)
+          echo "Creating function auth"
+          az storage account create --name "$storageAccountName" --location "$location" --resource-group "$resourceGroup" --sku Standard_LRS --allow-blob-public-access false
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionAuthName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          echo "Creating function generateEmbeddings"
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionGenerateEmbeddingsName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          echo "Creating function match"
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionMatchName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          echo "Creating function meet"
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionMeetName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          echo "Creating function query"
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionQueryName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          echo "Creating function syncPosition"
+          az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionSyncPositionName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+          exit 0
+          ;;
         *)
             usage
             ;;
     esac
 done
 shift $((OPTIND-1))
+
 
 echo "Configuring required Azure services..."
 
@@ -140,6 +166,21 @@ jsonBody=$(cat <<EOF
 EOF
 )
 curl -H "Content-Type: application/json" -H "api-key: $adminKey" --request PUT --data "$jsonBody" "https://$searchName.search.windows.net/indexes('$searchIndexName')?allowIndexDowntime=False&api-version=2023-10-01-Preview"
+
+echo "Creating function auth"
+az storage account create --name "$storageAccountName" --location "$location" --resource-group "$resourceGroup" --sku Standard_LRS --allow-blob-public-access false
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionAuthName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+echo "Creating function generateEmbeddings"
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionGenerateEmbeddingsName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+echo "Creating function match"
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionMatchName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+echo "Creating function meet"
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionMeetName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+echo "Creating function query"
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionQueryName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+echo "Creating function syncPosition"
+az functionapp create --resource-group "$resourceGroup" --consumption-plan-location "$shortLocation" --functions-version 4 --name "$functionSyncPositionName" --storage-account "$storageAccountName" --os-type linux --runtime custom --disable-app-insights
+
 
 # Currently disabled - a push strategy seems better for our usecase (otherwise the delay would be minimum 3 minutes), but in future batching might be better
 #echo "Creating data source"

@@ -67,22 +67,20 @@ async fn generate_embeddings(
     map.insert("input", payload.description.clone());
     map.insert("model", state.openai_model.clone());
 
-    // let client = reqwest::Client::new();
-    // println!("Posting {}, with token {} and input {}", state.openai_base_url, state.openai_api_key, payload.description);
-    // let res = client.post(&state.openai_base_url)
-    //     //.query(&[("api-version", "API_VERSION")]) only used in Azure OpenAI
-    //     .header("Authorization", format!("Bearer {}", state.openai_api_key))
-    //     .header("Content-Type", "application/json")
-    //     .json(&map)
-    //     .send()
-    //     .await?;
-    // println!("Status: {}", res.status());
-    // println!("Headers:\n{:#?}", res.headers());
+    let client = reqwest::Client::new();
+    let res = client.post(&state.openai_base_url)
+        //.query(&[("api-version", "API_VERSION")]) only used in Azure OpenAI
+        .header("Authorization", format!("Bearer {}", state.openai_api_key))
+        .header("Content-Type", "application/json")
+        .json(&map)
+        .send()
+        .await?;
 
-    // let openai_response = res.json::<OpenAIResponse>().await?;
-    let file = fs::File::open("example_openai_response.json").expect("file should open read only");
-    let openai_response: OpenAIResponse =
-        serde_json::from_reader(file).expect("file should be proper JSON");
+    let openai_response = res.json::<OpenAIResponse>().await?;
+    // Use the following lines to load embeddings from a json file for debugging
+    // let file = fs::File::open("example_openai_response.json").expect("file should open read only");
+    // let openai_response: OpenAIResponse =
+    //     serde_json::from_reader(file).expect("file should be proper JSON");
 
     let embeddings = &openai_response.data.first().unwrap().embedding;
 

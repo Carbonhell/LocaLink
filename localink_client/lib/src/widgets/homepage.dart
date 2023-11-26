@@ -25,6 +25,7 @@ class Homepage extends StatefulWidget {
 class HomepageState extends State<Homepage> {
   bool isButtonDisabled = true;
   String? description;
+  int lastTimestamp = 0;
 
   @override
   void initState() {
@@ -40,8 +41,13 @@ class HomepageState extends State<Homepage> {
   }
 
   Future<void> _syncPosition(String token) async {
-    var position = await determinePosition();
-    await API().syncPosition(token, LatLng(position.latitude, position.longitude));
+    var currentTime = DateTime.now().millisecondsSinceEpoch;
+    if(currentTime > 10000 + lastTimestamp) {
+      lastTimestamp = currentTime;
+      var position = await determinePosition();
+      await API().syncPosition(
+          token, LatLng(position.latitude, position.longitude));
+    }
   }
 
   @override

@@ -14,7 +14,7 @@
   },
   "customHandler": {
     "description": {
-      "defaultExecutablePath": "target/release/meet.exe",
+      "defaultExecutablePath": "meet_handler",
       "workingDirectory": "",
       "arguments": []
     },

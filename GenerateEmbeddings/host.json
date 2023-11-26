@@ -14,7 +14,7 @@
   },
   "customHandler": {
     "description": {
-      "defaultExecutablePath": "target/release/generate_embeddings.exe",
+      "defaultExecutablePath": "generate_embeddings_handler",
       "workingDirectory": "",
       "arguments": []
     },

@@ -14,7 +14,7 @@
   },
   "customHandler": {
     "description": {
-      "defaultExecutablePath": "target/release/auth_handler.exe",
+      "defaultExecutablePath": "auth_handler",
       "workingDirectory": "",
       "arguments": []
     },
