@@ -109,7 +109,7 @@ class HomepageState extends State<Homepage> {
                                 authResponse: authResponse, match: item)),
                       );
                     }
-                  : showDescription(item),
+                  : () => showDescription(item),
               updateItem: (newStatus) {
                 setState(() {
                   item.matchStatus = newStatus;

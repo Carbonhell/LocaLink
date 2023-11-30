@@ -46,6 +46,7 @@ dependencies:
   geolocator: ^10.1.0
   google_maps_flutter: ^2.5.0
   flutter_map_location_marker: ^8.0.2
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,11 @@ flutter:
   assets:
     - assets/svg/login-banner.svg
     - .env
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/app-icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

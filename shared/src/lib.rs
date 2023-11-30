@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 use azure_data_cosmos::prelude::{
-    AuthorizationToken, CloudLocation, CollectionClient, CosmosClient, Param, Query, GetDocumentResponse
+    AuthorizationToken, CloudLocation, CollectionClient, CosmosClient, Param, Query, GetDocumentResponse,
 };
 use base64::engine::general_purpose::STANDARD_NO_PAD;
 use base64::Engine;
@@ -30,7 +30,7 @@ pub enum MatchStatus {
     /// Allows visualizing location data to allow users to meet.
     Accepted = 3,
     /// Discarded match, could be useful in future to prevent matching the same user again.
-    Denied = 4
+    Denied = 4,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -38,7 +38,7 @@ pub struct Match {
     pub id: String,
     pub name: String,
     pub description: String,
-    pub match_status: MatchStatus
+    pub match_status: MatchStatus,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -50,7 +50,8 @@ pub struct UserDocument {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub description_embeddings: Option<Vec<f64>>, // todo vec length is constant, we can optimize this
+    pub description_embeddings: Option<Vec<f64>>,
+    // todo vec length is constant, we can optimize this
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Point>,
     /// Denotes matches related to this user.
@@ -72,7 +73,8 @@ pub struct UserSearchData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub description_embeddings: Option<Vec<f64>>, // todo vec length is constant, we can optimize this
+    pub description_embeddings: Option<Vec<f64>>,
+    // todo vec length is constant, we can optimize this
     #[serde(skip_serializing_if = "Option::is_none")]
     pub location: Option<Point>,
 }
@@ -180,12 +182,12 @@ pub async fn get_user_document_by_id(
 
     let result = doc_client.map_err(|_| AuthError).map(|doc| {
         if let GetDocumentResponse::Found(document) = doc {
-                    return Ok(document.document.document)
-                } else {
-                    return Err(NotFoundError)
-                };
+            return Ok(document.document.document);
+        } else {
+            return Err(NotFoundError);
+        };
     })?;
-    println!("Result: {:?}",result);
+    println!("Result: {:?}", result);
     result
 }
 
@@ -302,6 +304,7 @@ pub async fn index_documents(
 
     Ok(())
 }
+
 #[derive(Serialize, Deserialize)]
 struct VectorQuery {
     kind: String,
@@ -339,14 +342,27 @@ pub async fn cognitive_query(
     index_name: &str,
     admin_key: &str,
     user_document: &UserSearchData,
-) -> Result<CognitiveResponse, reqwest::Error> {
+) -> Result<CognitiveResponse, AppError> {
+    let user_location = user_document
+        .location
+        .as_ref()
+        .ok_or(AppError::MissingLocationData)?;
+    let user_description_embeddings = user_document
+        .description_embeddings
+        .as_ref()
+        .ok_or(AppError::NotFoundError)?;
+
     let cognitive_query_body = CognitiveQueryBody {
         select: "id, name, description".to_owned(),
-        filter: format!("id ne '{}'", user_document.id),
+        filter: format!("id ne '{}' and geo.distance(location, geography'POINT({} {})') le 5",
+                        user_document.id,
+                        user_location.coordinates[0],
+                        user_location.coordinates[1]
+        ),
         vectorFilterMode: "preFilter".to_owned(),
         vectorQueries: vec![VectorQuery {
             kind: "vector".to_owned(),
-            vector: user_document.description_embeddings.clone().unwrap(),
+            vector: user_description_embeddings.to_vec(),
             fields: "description_embeddings".to_owned(),
             k: 3,
         }],
@@ -365,7 +381,7 @@ pub async fn cognitive_query(
 
     match response.status() {
         StatusCode::OK => Ok(response.json::<CognitiveResponse>().await?),
-        _ => panic!("Error with cognitive query request"),
+        _ => Err(AppError::GenericError),
     }
 }
 

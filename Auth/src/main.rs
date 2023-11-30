@@ -82,7 +82,11 @@ async fn handle_auth(State(state): State<Arc<AppState>>, Json(payload): Json<Aut
                 }
             };
 
-            let x = state.user_collection_client.create_document(user_document.clone()).is_upsert(true).await;
+            state
+                .user_collection_client
+                .create_document(user_document.clone())
+                .is_upsert(true)
+                .await?;
             println!("User {} saved.", user_document.id);
             Ok(user_document)
         }
@@ -104,7 +108,6 @@ async fn main() -> azure_core::Result<()> {
     let collection_client = get_collection_client().await.unwrap();
 
     let shared_state = Arc::new(AppState { user_collection_client: collection_client });
-
 
     // build our application with a single route
     let app = Router::new()
