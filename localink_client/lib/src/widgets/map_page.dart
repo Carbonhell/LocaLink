@@ -57,6 +57,9 @@ class MapPageState extends State<MapPage> {
       accuracy: LocationAccuracy.high,
       distanceFilter: 20,
     );
+    var lastPos = await Geolocator.getLastKnownPosition();
+    _devicePosition = LatLng(lastPos!.latitude, lastPos!.longitude);
+
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) {
@@ -93,8 +96,6 @@ class MapPageState extends State<MapPage> {
             child: FutureBuilder<void>(
                 future: setupMarkers(token),
                 builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-                  print(snapshot);
-                  print(_devicePosition);
                   if (snapshot.connectionState == ConnectionState.done &&
                       _devicePosition != null) {
                     var markers = {Marker(
